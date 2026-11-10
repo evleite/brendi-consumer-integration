@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ProcessedEvent {
+  id            String   @id @default(cuid())
+  eventId       String   @unique @map("event_id")
+  eventType     String   @map("event_type")
+  orderId       String   @map("order_id")
+  receivedAt    DateTime @map("received_at")
+  processedAt   DateTime? @map("processed_at")
+  status        String   @default("pending")
+  errorMessage  String?  @map("error_message")
+  rawPayload    Json?    @map("raw_payload")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([receivedAt])
+  @@map("processed_events")
+}
+
+model Order {
+  id                String   @id @map("id")
+  brendiOrderId     String   @unique @map("brendi_order_id")
+  consumerOrderId   String?  @unique @map("consumer_order_id")
+  status            String   @default("pending")
+  customer          Json
+  items             Json
+  totals            Json
+  delivery          Json
+  payment           Json
+  metadata          Json?
+  createdAt         DateTime @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  deliveredAt       DateTime? @map("delivered_at")
+  ackAt             DateTime? @map("ack_at")
+
+  @@index([status])
+  @@index([brendiOrderId])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model PollingSession {
+  id               String   @id @default(cuid())
+  startedAt        DateTime @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  status           String   @default("running")
+  eventsFetched    Int      @default(0) @map("events_fetched")
+  eventsProcessed  Int      @default(0) @map("events_processed")
+  eventsFailed     Int      @default(0) @map("events_failed")
+  errorMessage     String?  @map("error_message")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("polling_sessions")
+}
